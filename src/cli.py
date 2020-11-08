@@ -77,42 +77,19 @@ def compress(logfile):
 @logfile_option
 @config_option
 def start(ctx: Context, logfile, time_step):
+    """Record active windows forever.
+
+    If you start the recording twice, it will corrupt the log file."""
+
     assert time_step >= 1
 
     logs = Logs.load(logfile)
 
     categ = ctx.group_category(logs)
-    print_group_logs(categ[UNCAT])
+    print_group_logs(categ.get(UNCAT), [])
     show_categ(categ)
 
-    try:
-
-        last = time()
-        while True:
-            try:
-                log = LogEntry.get_log(time_step)
-            except subprocess.CalledProcessError as e:
-                print(e)
-                sleep(1)
-            else:
-                logs.append(log)
-
-                cat = ctx.get_cat(log)
-                if cat is UNCAT:
-                    print(logs[-1])
-
-            time_taken = time() - last
-            if time_taken >= time_step:  # for instance lid closed
-                time_taken = 0
-                last = time()
-            else:
-                last += time_step
-
-            sleep(time_step - time_taken)
-
-    except BaseException:
-        subprocess.call(["notify-send", 'App Watch stopped !', "-a", "app_watch.py"])
-        raise
+    logs.watch_apps()
 
 
 @app_watch.command()

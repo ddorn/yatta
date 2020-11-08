@@ -1,7 +1,8 @@
 import subprocess
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Optional, Callable, List
+from time import time, sleep
+from typing import Optional, Callable, List, NoReturn
 
 from src.utils import sec2str, contrast, fmt
 
@@ -100,6 +101,42 @@ class Logs(list):
         super().__init__(*args)
         self.first = True
         self.file = file
+
+    def watch_apps(self, step=1) -> NoReturn:
+        """Check for the active windows undefinetly.
+
+        [time_step] is the duration to sleep between checks."""
+
+        assert self.file
+
+        try:
+            self._watch_apps(step)
+        except KeyboardInterrupt:
+            raise
+        except BaseException:
+            subprocess.call(["notify-send", 'App Watch stopped !', "-a", "app_watch.py"])
+            raise
+
+    def _watch_apps(self, time_step):
+        last = time()
+        while True:
+            try:
+                log = LogEntry.get_log(time_step)
+            except subprocess.CalledProcessError as e:
+                print(e)
+            else:
+                self.append(log)
+
+            time_taken = time() - last
+
+            # for instance lid closed
+            if time_taken >= time_step:
+                last = time()
+                continue
+
+            # This keeps the average between calls exactly time_step
+            last += time_step
+            sleep(time_step - time_taken)
 
     @classmethod
     def load(cls, file):
