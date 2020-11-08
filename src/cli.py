@@ -49,7 +49,7 @@ class ConfigType(click.ParamType):
 
 
 config_option = click.option(
-    "--config", "-c", "ctx",
+    "--config", "ctx",
     default=CONFIG.as_posix(),
     type=ConfigType(),
     help="Python config file."
@@ -137,16 +137,17 @@ def query(ctx: Context, logfile, pattern, day, category, total, by_category, tim
         # Start the day at 4AM
         if day.hour < 4:
             day -= DAY
-        day = day.replace(hour=4)
-        next_day = day + DAY
+        day = day.replace(hour=4, minute=0)
 
-        logs = [c for log in logs if (c := log.intersected(day, next_day)) is not None]
+        logs = ctx.filter_time(logs, day, day + DAY)
 
     if pattern:
-        logs = [log for log in logs if pattern in log.name]
+        logs = ctx.filter_pattern(logs, pattern)
 
     if category:
-        logs = [log for log in logs if ctx.get_cat(log) == category]
+        logs = ctx.filter_category(logs, category)
+
+    logs = list(logs)
 
     if not logs:
         print("No matching logs")

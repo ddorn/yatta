@@ -42,6 +42,8 @@ def categorize(log: LogEntry) -> Category:
                 return cat
 
     name_contains_map = {
+        "cqfd": CQFD,  # High priority
+
         "Telegram": CHAT,
         "Discord": CHAT,
         "WhatsApp": CHAT,
@@ -59,7 +61,6 @@ def categorize(log: LogEntry) -> Category:
         "biblio.cc": MOOC,
 
         "Google Drive": CQFD,
-        "cqfd": CQFD,
         "Agepoly": CQFD,
         "Pulls": CQFD,
         "Outlook": CQFD,

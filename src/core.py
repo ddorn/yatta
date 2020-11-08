@@ -147,7 +147,7 @@ class Category:
         return hash(self.name)
 
     def __eq__(self, other):
-        return self.name == other.name
+        return self.name == str(other)
 
     @property
     def bg(self):
