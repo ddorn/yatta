@@ -20,7 +20,7 @@ class LogEntry:
     name: str
     end: datetime
 
-    def __repr__(self):
+    def __str__(self):
         return f"{sec2str(self.duration)}: {self.klass} || {self.name}"
 
     @property
@@ -101,37 +101,48 @@ class Logs(list):
         super().__init__(*args)
         self.first = True
         self.file = file
+        self._stop = False
 
-    def watch_apps(self, step=1) -> NoReturn:
+    def stop(self):
+        """Stop the app monitoring."""
+        self._stop = True
+
+    def watch_apps(self, step=1, callback: Optional[Callable[[LogEntry], None]]=None) -> NoReturn:
         """Check for the active windows undefinetly.
 
-        [time_step] is the duration to sleep between checks."""
+        [time_step] is the duration to sleep between checks.
+        [callback] is called every time a log entry is created,
+            with the entry as only parameter."""
 
         assert self.file
+        assert step >= 1
 
         try:
-            self._watch_apps(step)
-        except KeyboardInterrupt:
-            raise
+            self._watch_apps(step, callback)
         except BaseException:
-            subprocess.call(["notify-send", 'App Watch stopped !', "-a", "app_watch.py"])
             raise
+        finally:
+            subprocess.call(["notify-send", 'Yatta stopped !', 'Active window monitoring has stopped.',"-a", "yatta.py"])
 
-    def _watch_apps(self, time_step):
+    def _watch_apps(self, time_step, callback):
         last = time()
-        while True:
+        self._stop = False
+        while not self._stop:
             try:
                 log = LogEntry.get_log(time_step)
             except subprocess.CalledProcessError as e:
                 print(e)
             else:
                 self.append(log)
+                if callback:
+                    callback(log)
 
             time_taken = time() - last
 
             # for instance lid closed
             if time_taken >= time_step:
                 last = time()
+                print("skip")
                 continue
 
             # This keeps the average between calls exactly time_step
@@ -154,18 +165,32 @@ class Logs(list):
             if self.file:
                 log.write_log(self.file)
         else:
-            last = self[-1]
-
-            if last.name == log.name and last.klass == log.klass and abs(last.end - log.start) < SEC:
-                last.end = log.end
-            else:
-                list.append(self, log)
+            if not self.merge(log):
                 if self.file:
                     # Write last line of last log
-                    last.write_log(self.file, True)
+                    self[-1].write_log(self.file, True)
                     log.write_log(self.file)
 
         self.first = False
+
+    def merge(self, log) -> bool:
+        """Append a log to the list, and merge it with the previous one if possible.
+
+        Returns whether the log was merged.
+        This method can be called with a regular list as argument, if requiered,
+        but keep in mind that it modifies the last log when returning true... (it CAN cause bugs...)."""
+
+        if not self:
+            list.append(self, log)
+            return False
+
+        last = self[-1]
+        if last.name == log.name and last.klass == log.klass and abs(last.end - log.start) < SEC:
+            last.end = log.end
+            return True
+        else:
+            list.append(self, log)
+            return False
 
     def __del__(self):
         if self.file and not self.first:

@@ -7,9 +7,11 @@ information.
 
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, List, Callable, Iterator
+from datetime import datetime, timedelta
+from typing import Dict, List, Callable, Iterator, Tuple
 
-from src.core import Category, LogEntry
+from src.core import Category, LogEntry, DAY
+from src.utils import start_of_day
 
 LogList = List[LogEntry]
 LogIterator = Iterator[LogEntry]
@@ -32,6 +34,18 @@ class Context:
             categs[cat].append(log)
 
         return categs
+
+    def sort_categories(self, cats: Dict[Category, LogList], best=None, reverse=False) -> List[Tuple[Category, LogList]]:
+        """Return a list of categories and logs sorted by total time.
+
+        If [best] is given, return only the [best] categories with the most time."""
+
+        cats = sorted(cats.items(), key=lambda x: self.tot_secs(x[1]), reverse=not reverse)
+
+        if best:
+            return cats[:best]
+
+        return cats
 
     @staticmethod
     def filter_time(logs: LogList, start, end, clamp=True) -> LogIterator:
@@ -73,3 +87,15 @@ class Context:
         for log in logs:
             if log.duration >= min_time:
                 yield log
+
+    @staticmethod
+    def filter_today(logs, shift=0, day_start_hour=4):
+        """Yield all logs that happend today.
+
+        if [shift] is given, shifts the day relatively to today.
+        [day_start_hour] is the first hour in a day."""
+
+        day = datetime.now() + shift * DAY
+        day = start_of_day(day)
+
+        yield from Context.filter_time(logs, day, day + DAY)

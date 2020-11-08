@@ -1,16 +1,23 @@
 """
 General utility function not specific to any aspect of app tracking.
 """
-
+from datetime import timedelta, datetime
 from typing import Tuple
 
 __all__ = ["sec2str", "int_to_rgb", "contrast", "fmt"]
 
 
+def start_of_day(date: datetime, start_hour=4):
+    if date.hour < start_hour:
+        date -= timedelta(days=1)
+    return date.replace(hour=start_hour, minute=0, second=0, microsecond=0)
+
+
+
 def sec2str(sec: float) -> str:
     """Convert a number of seconds into a common string form."""
 
-    sec = int(sec)
+    sec = int(round(sec))
     h = sec // 3600
     m = sec // 60 % 60
     s = sec % 60

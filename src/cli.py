@@ -56,6 +56,9 @@ config_option = click.option(
 )
 
 
+time_step_option = click.option("--time-step", "-t", default=1, help="Seconds between window title check")
+
+
 @click.group()
 def yatta():
     pass
@@ -73,15 +76,13 @@ def compress(logfile):
 
 
 @yatta.command()
-@click.option("--time-step", "-t", default=1, help="Seconds between window title check")
+@time_step_option
 @logfile_option
 @config_option
 def start(ctx: Context, logfile, time_step):
     """Record active windows forever.
 
     If you start the recording twice, it will corrupt the log file."""
-
-    assert time_step >= 1
 
     logs = Logs.load(logfile)
 
@@ -90,6 +91,17 @@ def start(ctx: Context, logfile, time_step):
     show_categ(categ)
 
     logs.watch_apps()
+
+
+@yatta.command()
+@logfile_option
+@config_option
+def gui(ctx, logfile):
+    logs = Logs.load(logfile)
+
+    from src.gui import gui
+
+    gui(ctx, logs)
 
 
 @yatta.command()
@@ -110,13 +122,7 @@ def query(ctx: Context, logfile, pattern, day, category, total, by_category, tim
     logs = Logs.load(logfile)
 
     if day >= 0:
-        day = datetime.now() + timedelta(days=-day)
-        # Start the day at 4AM
-        if day.hour < 4:
-            day -= DAY
-        day = day.replace(hour=4, minute=0)
-
-        logs = ctx.filter_time(logs, day, day + DAY)
+        logs = ctx.filter_today(logs, -day, 4)
 
     if pattern:
         logs = ctx.filter_pattern(logs, pattern)
