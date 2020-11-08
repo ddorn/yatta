@@ -57,11 +57,11 @@ config_option = click.option(
 
 
 @click.group()
-def app_watch():
+def yatta():
     pass
 
 
-@app_watch.command()
+@yatta.command()
 @logfile_option
 def compress(logfile):
     logs = Logs.load(logfile)
@@ -72,7 +72,7 @@ def compress(logfile):
         compressed.append(log)
 
 
-@app_watch.command()
+@yatta.command()
 @click.option("--time-step", "-t", default=1, help="Seconds between window title check")
 @logfile_option
 @config_option
@@ -92,7 +92,7 @@ def start(ctx: Context, logfile, time_step):
     logs.watch_apps()
 
 
-@app_watch.command()
+@yatta.command()
 @click.option("--day", "-d", default=0, help="How many days ago. Negative value means all time.")
 @click.option("--category", "-c", help="Search only in this category")
 @click.option("--pattern", "-p", help="Should contain this pattern")
@@ -159,7 +159,7 @@ def query(ctx: Context, logfile, pattern, day, category, total, by_category, tim
             print_group_logs(logs, total)
 
 
-@app_watch.command("list-cat")
+@yatta.command("list-cat")
 @logfile_option
 @config_option
 def list_cat(ctx, logfile):
