@@ -83,11 +83,12 @@ class LogEntry:
         wm_name = wm_name.partition(" = ")[2][1:-1]
         wm_class = wm_class.partition(" = ")[2]
 
+        start = datetime.now()
         return cls(
-            datetime.now(),
+            start,
             wm_class,
             wm_name,
-            datetime.now() + SEC * time_step,
+            start + SEC * time_step,
         )
 
     @classmethod
@@ -97,6 +98,8 @@ class LogEntry:
 
 
 class Logs(list):
+    DELTA = SEC
+
     def __init__(self, *args, file=None):
         super().__init__(*args)
         self.first = True
@@ -168,7 +171,7 @@ class Logs(list):
             if not self.merge(log):
                 if self.file:
                     # Write last line of last log
-                    self[-1].write_log(self.file, True)
+                    self[-2].write_log(self.file, True)
                     log.write_log(self.file)
 
         self.first = False
@@ -178,19 +181,22 @@ class Logs(list):
 
         Returns whether the log was merged.
         This method can be called with a regular list as argument, if requiered,
-        but keep in mind that it modifies the last log when returning true... (it CAN cause bugs...)."""
+        but keep in mind that it modifies the last log... (it CAN cause bugs...)."""
 
         if not self:
             list.append(self, log)
             return False
 
         last = self[-1]
-        if last.name == log.name and last.klass == log.klass and abs(last.end - log.start) < SEC:
-            last.end = log.end
-            return True
-        else:
-            list.append(self, log)
-            return False
+        if abs(last.end - log.start) < self.DELTA:
+            if last.name == log.name and last.klass == log.klass:
+                last.end = log.end
+                return True
+            else:
+                last.end = log.start
+
+        list.append(self, log)
+        return False
 
     def __del__(self):
         if self.file and not self.first:

@@ -93,6 +93,7 @@ def categorize(log: LogEntry) -> Category:
         "zsh": CODE,
         "Dark Lama": CODE,
         "color.firefox": CODE,
+        "TMUX": CODE,
 
         "zoom": EPFL,
         "moodle.epfl.ch": EPFL,
@@ -110,6 +111,14 @@ def categorize(log: LogEntry) -> Category:
         "MATH-483": EPFL,
         "Sheet7": EPFL,
         "EPFL": EPFL,
+        "chap3.pdf": EPFL,
+        "chap4.pdf": EPFL,
+
+        "dropbox": ASSIST,
+        "serie_": ASSIST,
+        "corrige_": ASSIST,
+        "wacom": ASSIST,
+        "kleki": ASSIST,
 
         "diego@maple:": WONTFIX,
 
@@ -117,6 +126,9 @@ def categorize(log: LogEntry) -> Category:
         "Youtube": CHILL,
         "Google Photos": CHILL,
         "faireplusachetermoins.fr": CHILL,
+        "conway.pdf": CHILL,
+        "angel-mathe": CHILL,
+        "remarkable": CHILL,
     }
 
     for pattern, cat in name_contains_map.items():
