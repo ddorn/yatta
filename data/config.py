@@ -113,6 +113,7 @@ def categorize(log: LogEntry) -> Category:
         "EPFL": EPFL,
         "chap3.pdf": EPFL,
         "chap4.pdf": EPFL,
+        "Hildebrand-Intro": EPFL,
 
         "dropbox": ASSIST,
         "serie_": ASSIST,

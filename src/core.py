@@ -70,18 +70,11 @@ class LogEntry:
         )
 
     @classmethod
-    def from_xprop(cls, output, time_step) -> "LogEntry":
+    def get_log(cls, time_step=1) -> "LogEntry":
+        a = subprocess.check_output("xprop -id $(xdotool getwindowfocus) -notype WM_NAME WM_CLASS", shell=True, text=True).splitlines()
 
-        wm_name = ""
-        wm_class = ""
-        for line in output.splitlines():
-            if line.startswith("WM_NAME"):
-                wm_name = line
-            elif line.startswith("WM_CLASS"):
-                wm_class = line
-
-        wm_name = wm_name.partition(" = ")[2][1:-1]
-        wm_class = wm_class.partition(" = ")[2]
+        wm_name = a[0].partition(" = ")[2][1:-1]
+        wm_class = a[1].partition(" = ")[2]
 
         start = datetime.now()
         return cls(
@@ -90,11 +83,6 @@ class LogEntry:
             wm_name,
             start + SEC * time_step,
         )
-
-    @classmethod
-    def get_log(cls, time_step=1) -> "LogEntry":
-        a = subprocess.check_output("xprop -id $(xdotool getwindowfocus)", shell=True, text=True)
-        return cls.from_xprop(a, time_step)
 
 
 class Logs(list):

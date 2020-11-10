@@ -82,6 +82,7 @@ def gui(ctx: Context, logs: Logs):
                 durs.clear()
                 durs.update({c: ctx.tot_secs(ls) for c, ls in cats.items()})
                 next_day = start_of_day(datetime.now()) + DAY
+                display.fill(0)
 
             pygame.display.update()
             sleep(0.5)  # We don't need more than 2 FPS :P
