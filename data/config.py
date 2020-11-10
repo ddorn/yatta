@@ -11,6 +11,9 @@ The categorize function should always return a category, so
 is the minimal function.
 """
 
+import re
+from pathlib import Path
+from typing import List, Tuple
 
 from src.core import LogEntry, Category, AFK, UNCAT
 
@@ -28,112 +31,57 @@ WONTFIX = Category("Wont fix", 0x000080)
 ADMIN = Category("Administratif", 0xaaaaaa)
 
 
+def load_rules() -> List[Tuple[Category, re.Pattern]]:
+    cats = {k: v for k, v in globals().items() if k.isupper()}
+
+    file = Path(__file__).with_suffix(".yatta").read_text().splitlines()
+
+    rules = []
+    last_cat = None
+    for line in file:
+        stripped = line.strip()
+        if stripped.startswith("#") or not stripped:
+            continue
+
+        if line.startswith(" "):  # rule
+            assert last_cat, "The rule is not in a category"
+
+            # find if there is a type
+            t, _, rule = stripped.partition(" ")
+            rule = rule.strip()
+            flags = re.IGNORECASE
+            if t.lower() in ("r", "e"):
+                if t.isupper():
+                    flags ^= re.IGNORECASE
+
+                t = t.lower()
+                if t == "r":  # rule is a regex
+                    pass
+                # elif t == "e":  # rule is a conjunction
+                #     rule = t.split("&")
+            else:
+                rule = re.escape(stripped)
+
+            rules.append((last_cat, re.compile(rule, flags)))
+        else:  # Category
+            last_cat = cats[stripped.strip(":")]
+
+    return rules
+
+
+name_rules = load_rules()
+
+
 def categorize(log: LogEntry) -> Category:
     # Categorizing vim uses
     if log.name == "nvim":
         return CODE
-    if "NVIM" in log.name:
-        mapping = {
-            "app_watch.py": TIMETRACK,
-            "nixos-conf": NIXOS,
-        }
-        for pattern, cat in mapping.items():
-            if pattern in log.name:
-                return cat
 
-    name_contains_map = {
-        "cqfd": CQFD,  # High priority
+    if log.klass == '"zoom", "zoom"':
+        return categorize_zoom(log)
 
-        "Telegram": CHAT,
-        "Discord": CHAT,
-        "WhatsApp": CHAT,
-        "chat.lama-corp.space": CHAT,
-        "Courrier": CHAT,
-        "aerc": CHAT,
-        "zimbra": CHAT,
-
-        "logement": ADMIN,
-        "FMEL": ADMIN,
-
-        "Mooc": MOOC,
-        "Coursera": MOOC,
-        "predproie.cc": MOOC,
-        "biblio.cc": MOOC,
-
-        "Google Drive": CQFD,
-        "Agepoly": CQFD,
-        "Pulls": CQFD,
-        "Outlook": CQFD,
-        "Association des Etudiants en Mathématiques": CQFD,
-        "Liste séminaire 2020/2021": CQFD,
-        "Journée des gymnasiens": CQFD,
-        "Tous les logos": CQFD,
-        "Vote des logos": CQFD,
-        "docs.google.com": CQFD,
-        "drive.google.com": CQFD,
-        "www.batelier.fr/": CQFD,
-
-        "app_watch.py": TIMETRACK,
-        "ActivityWatch": TIMETRACK,
-        "ARBTT": TIMETRACK,
-        "Wakatime": TIMETRACK,
-        "yatta": TIMETRACK,
-
-        "home-manager": NIXOS,
-        "nixos-conf": NIXOS,
-        "Nixos": NIXOS,
-        "configuration.nix": NIXOS,
-
-        "Stack Overflow": CODE,
-        "Python": CODE,
-        "prog/vrac": CODE,
-        "starship": CODE,
-        "linux": CODE,
-        "shell": CODE,
-        "zsh": CODE,
-        "Dark Lama": CODE,
-        "color.firefox": CODE,
-        "TMUX": CODE,
-
-        "zoom": EPFL,
-        "moodle.epfl.ch": EPFL,
-        "Ex_GT_Ch": EPFL,
-        "Graph_Lec": EPFL,
-        "Course: ": EPFL,
-        "Moodle": EPFL,
-        "Kuratowski.pdf": EPFL,
-        "VSCodium": EPFL,
-        "wikipedia": EPFL,
-        "theorem": EPFL,
-        "examen": EPFL,
-        "Epic Mountain": EPFL,
-        "piazza": EPFL,
-        "MATH-483": EPFL,
-        "Sheet7": EPFL,
-        "EPFL": EPFL,
-        "chap3.pdf": EPFL,
-        "chap4.pdf": EPFL,
-        "Hildebrand-Intro": EPFL,
-
-        "dropbox": ASSIST,
-        "serie_": ASSIST,
-        "corrige_": ASSIST,
-        "wacom": ASSIST,
-        "kleki": ASSIST,
-
-        "diego@maple:": WONTFIX,
-
-        "Reddit": CHILL,
-        "Youtube": CHILL,
-        "Google Photos": CHILL,
-        "faireplusachetermoins.fr": CHILL,
-        "conway.pdf": CHILL,
-        "angel-mathe": CHILL,
-        "remarkable": CHILL,
-    }
-
-    for pattern, cat in name_contains_map.items():
-        if pattern.casefold() in log.name.casefold():
+    for cat, pattern in name_rules:
+        if re.search(pattern, log.name):
             return cat
 
     class_contains_map = {
@@ -164,3 +112,28 @@ def categorize(log: LogEntry) -> Category:
     return UNCAT
 
 
+
+def categorize_zoom(log: LogEntry):
+    """Do it based on my schedule as zoom does not provide any meaningful info -_-"""
+    weekday = log.start.weekday()
+    hour = log.start.hour
+
+    if weekday == 0:  # Monday
+        if hour == 10:
+            return ASSIST
+        elif hour == 12:
+            return CHILL  # Séminaire Bachelor
+    elif weekday == 1:  # Tuesday
+        if 14 <= hour < 16:
+            return ASSIST
+    elif weekday == 2:  # Wednesday
+        if hour == 16:
+            return CQFD
+    elif weekday == 3:  # Thursday
+        if 10 <= hour < 12 or 13 <= hour < 15:
+            return ASSIST
+    elif weekday == 4:  # Friday
+        if hour == 18:
+            return CHILL  # Trivials notions
+
+    return EPFL

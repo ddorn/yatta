@@ -61,9 +61,14 @@ def gui(ctx: Context, logs: Logs):
             surf = draw_cat(c, dur)
             display.blit(surf, (0, SIZE[1] // ROWS * (i + 1)))
 
-    cats = ctx.group_category(ctx.filter_today(logs))
-    durs = defaultdict(int, {c: ctx.tot_secs(ls) for c, ls in cats.items()})
+    durs = defaultdict(int)
     next_day = start_of_day(datetime.now()) + DAY
+
+    def compute_durs():
+        cats = ctx.group_category(ctx.filter_today(logs))
+        durs.clear()
+        durs.update({c: ctx.tot_secs(ls) for c, ls in cats.items()})
+    compute_durs()
 
     thread = Thread(target=logs.watch_apps, args=(1, draw_screen))
     thread.start()
@@ -74,13 +79,13 @@ def gui(ctx: Context, logs: Logs):
                 if event.type == pygame.QUIT:
                     logs.stop()
                 elif event.type == pygame.KEYDOWN:
-                    pass
+                    if event.key == pygame.K_r:
+                        ctx.reload()
+                        compute_durs()
 
             # If day changes, take the cats for the correct day
             if datetime.now() >= next_day:
-                cats = ctx.group_category(ctx.filter_today(logs))
-                durs.clear()
-                durs.update({c: ctx.tot_secs(ls) for c, ls in cats.items()})
+                compute_durs()
                 next_day = start_of_day(datetime.now()) + DAY
                 display.fill(0)
 

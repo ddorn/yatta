@@ -20,6 +20,31 @@ LogIterator = Iterator[LogEntry]
 @dataclass
 class Context:
     get_cat: Callable[[LogEntry], Category]
+    path: str = ""
+
+    @classmethod
+    def load(cls, path):
+
+        with open(path, "r") as f:
+            code = f.read()
+
+        compiled = compile(code, path, "exec")
+        globs = {"__file__": path}
+        exec(compiled, globs)
+
+        try:
+            categorize = globs["categorize"]
+        except KeyError:
+            print(globs)
+            raise KeyError(f"No function [categorize] in {path}.")
+
+        return cls(categorize, path)
+
+    def reload(self):
+        assert self.path, "Cannot reload context without path"
+
+        new = self.load(self.path)
+        self.get_cat = new.get_cat
 
     @staticmethod
     def tot_secs(logs: LogList) -> float:

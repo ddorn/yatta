@@ -32,20 +32,7 @@ class ConfigType(click.ParamType):
         if isinstance(value, Context):
             return value
 
-        with open(value, "r") as f:
-            code = f.read()
-
-        compiled = compile(code, value, "exec")
-        globs = {}
-        exec(compiled, globs)
-
-        try:
-            categorize = globs["categorize"]
-        except KeyError:
-            print(globs)
-            self.fail("No function categorize defined in the config.")
-
-        return Context(categorize)
+        return Context.load(value)
 
 
 config_option = click.option(

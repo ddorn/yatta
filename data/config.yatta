@@ -1,0 +1,111 @@
+# This file defines rules in categories
+# Lines starting with a hash are ignored
+# Rules start with at least one space
+# Categories start with no space and any final : is ignored
+# No entry can start with a hash (#) nor with a sigle letter
+# that is used for a match type
+
+
+# High priority
+CQFD:
+    cqfd
+
+CHAT:
+    Telegram
+    Discord
+    WhatsApp
+    chat.lama-corp.space
+    Courrier
+    aerc
+    zimbra
+
+ADMIN:
+    logement
+    FMEL
+
+MOOC:
+    Mooc
+    Coursera
+    predproie.cc
+    biblio.cc
+
+CQFD:
+    Google Drive
+    Agepoly
+    Pulls
+    Outlook
+    Association des Etudiants en Mathématiques
+    Liste séminaire 2020/2021
+    Journée des gymnasiens
+    Tous les logos
+    Vote des logos
+    docs.google.com
+    drive.google.com
+    www.batelier.fr/
+
+TIMETRACK:
+    app_watch.py
+    ActivityWatch
+    ARBTT
+    Wakatime
+    yatta
+
+NIXOS:
+    home-manager
+    nixos-conf
+    Nixos
+    configuration.nix
+
+CODE:
+    Stack Overflow
+    Python
+    prog/vrac
+    starship
+    linux
+    shell
+    zsh
+    Dark Lama
+    color.firefox
+    TMUX
+
+EPFL:
+    zoom
+    moodle.epfl.ch
+ r  Ex_GT_Ch\d\d.pdf
+    Graph_Lec
+    Course
+    Moodle
+    Kuratowski.pdf
+    VSCodium
+    wikipedia
+    theorem
+    examen
+    Epic Mountain
+    piazza
+    MATH-483
+    Sheet7
+    EPFL
+ r  chap\d.pdf
+    Hildebrand-Intro
+    Exercise sheet
+
+
+ASSIST:
+    dropbox
+    serie_
+    corrige_
+    wacom
+    kleki
+
+WONTFIX:
+    diego@maple:
+
+CHILL:
+    Reddit
+    Youtube
+    Google Photos
+    faireplusachetermoins.fr
+    conway.pdf
+    angel-mathe
+    remarkable
+

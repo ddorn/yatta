@@ -19,7 +19,6 @@ def show_categ(categ: dict):
     for cat, logs in categ.items():
         tot_time[cat] = Context.tot_secs(logs)
 
-    print([c for c in tot_time])
     del tot_time[AFK]
 
     total = sum(tot_time.values())
