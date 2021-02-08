@@ -15,21 +15,30 @@ from src.utils import start_of_day, sec2str, int_to_rgb, notify
 
 def gui(ctx: Context, logs: Logs):
     SIZE = (200, 300)
-    ROWS = 5
 
+    def resize(size) -> pygame.Surface:
+        global SIZE
+        SIZE = size
+        return pygame.display.set_mode(SIZE, pygame.RESIZABLE)
+
+    ROW_IDEAL_SIZE = 60
     pygame.init()
-    display = pygame.display.set_mode(SIZE)
+    display = resize(SIZE)
+
     pygame.display.set_caption("Yatta")
+    # print(*sorted(pygame.font.get_fonts()), sep="\n")
 
     font = pygame.font.SysFont("sourcecodeproforpowerline", 20, bold=True)
-    # print(*sorted(pygame.font.get_fonts()), sep="\n")
+
+    def nb_rows():
+        return SIZE[1] // ROW_IDEAL_SIZE or 1
 
     def draw_cat(cat, seconds):
         bg = int_to_rgb(cat.bg)
         fg = int_to_rgb(cat.fg)
 
         # Background
-        drawing = pygame.Surface((SIZE[0], SIZE[1] // ROWS))
+        drawing = pygame.Surface((SIZE[0], SIZE[1] // nb_rows()))
         drawing.fill(bg)
         rect = drawing.get_rect()
 
@@ -66,7 +75,7 @@ def gui(ctx: Context, logs: Logs):
 
         for i, (c, dur) in enumerate(bests):
             surf = draw_cat(c, dur)
-            display.blit(surf, (0, SIZE[1] // ROWS * (i + 1)))
+            display.blit(surf, (0, SIZE[1] // nb_rows() * (i + 1)))
 
     durs = defaultdict(int)
     next_day = start_of_day(datetime.now()) + DAY
@@ -85,10 +94,14 @@ def gui(ctx: Context, logs: Logs):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     logs.stop()
+                elif event.type == pygame.VIDEORESIZE:
+                    display = resize(event.size)
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_r:
                         ctx.reload()
                         compute_durs()
+                    elif event.unicode.isdigit():
+                        display = resize((SIZE[0], int(event.unicode) * ROW_IDEAL_SIZE))
 
                 ctx.shortcuts(event)
 
@@ -99,6 +112,6 @@ def gui(ctx: Context, logs: Logs):
                 display.fill(0)
 
             pygame.display.update()
-            sleep(0.5)  # We don't need more than 2 FPS :P
+            sleep(1/3)  # We don't need more than 3 FPS :P
     finally:
         logs.stop()
