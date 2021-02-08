@@ -5,7 +5,7 @@ import subprocess
 from datetime import timedelta, datetime
 from typing import Tuple
 
-__all__ = ["sec2str", "int_to_rgb", "contrast", "fmt"]
+__all__ = ["sec2str", "int_to_rgb", "contrast", "fmt", "notify", "start_of_day"]
 
 
 def start_of_day(date: datetime, start_hour=4):

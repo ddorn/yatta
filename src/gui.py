@@ -1,4 +1,3 @@
-import os
 from collections import defaultdict
 from datetime import datetime
 from operator import itemgetter
@@ -6,112 +5,129 @@ from threading import Thread
 from time import sleep
 
 import pygame
-from pygame import Vector2 as V
+from pygame import Vector2 as Vec
 
 from src.context import Context
-from src.core import Logs, DAY, LogEntry, AFK, UNCAT
-from src.utils import start_of_day, sec2str, int_to_rgb, notify
+from src.core import AFK, DAY, LogEntry, Logs, UNCAT
+from src.utils import int_to_rgb, notify, sec2str, start_of_day
 
 
-def gui(ctx: Context, logs: Logs):
-    SIZE = (200, 300)
-
-    def resize(size) -> pygame.Surface:
-        global SIZE
-        SIZE = size
-        return pygame.display.set_mode(SIZE, pygame.RESIZABLE)
-
+class Gui:
     ROW_IDEAL_SIZE = 60
-    pygame.init()
-    display = resize(SIZE)
+    FPS = 1 / 3  # We don't need more than 3 FPS :P
 
-    pygame.display.set_caption("Yatta")
-    # print(*sorted(pygame.font.get_fonts()), sep="\n")
+    def __init__(self, ctx: Context, logs: Logs):
+        pygame.init()
 
-    font = pygame.font.SysFont("sourcecodeproforpowerline", 20, bold=True)
+        self.ctx = ctx
+        self.logs = logs
+        self.size = (200, 300)
+        self.durs = defaultdict(int)
+        self.next_day = start_of_day(datetime.now()) + DAY
 
-    def nb_rows():
-        return SIZE[1] // ROW_IDEAL_SIZE or 1
+        self.display = self.get_display(self.size)
+        pygame.display.set_caption("Yatta")
+        self.font = pygame.font.SysFont("sourcecodeproforpowerline", 20, bold=True)
 
-    def draw_cat(cat, seconds):
+    @property
+    def rows(self):
+        return self.size[1] // self.ROW_IDEAL_SIZE or 1
+
+    def get_display(self, size) -> pygame.Surface:
+        self.size = size
+        return pygame.display.set_mode(self.size, pygame.RESIZABLE)
+
+    def run(self):
+        self.compute_durs()
+
+        thread = Thread(target=self.logs.watch_apps, args=(1, self.draw))
+        thread.start()
+
+        try:
+            while thread.is_alive():
+                for event in pygame.event.get():
+                    self.process_event(event)
+
+                # If day changes, take the cats for the correct day
+                if datetime.now() >= self.next_day:
+                    self.compute_durs()
+                    self.next_day = start_of_day(datetime.now()) + DAY
+                    self.display.fill(0)
+
+                pygame.display.update()
+                sleep(self.FPS)
+
+                # Note: we don't draw the screen here. It is redrawn only on new
+                # Log entries (callback of the thread)
+        finally:
+            self.logs.stop()
+
+    def process_event(self, event):
+        if event.type == pygame.QUIT:
+            self.logs.stop()
+        elif event.type == pygame.VIDEOREself.size:
+            self.display = self.get_display(event.size)
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_r:
+                self.ctx.reload()
+                self.compute_durs()
+            elif event.unicode.isdigit():
+                self.display = self.get_display((self.size[0], int(event.unicode) * self.ROW_IDEAL_SIZE))
+
+        self.ctx.shortcuts(event)
+
+    def draw_cat(self, cat, seconds):
+        """Return a surface with the caegory drawn."""
         bg = int_to_rgb(cat.bg)
         fg = int_to_rgb(cat.fg)
 
         # Background
-        drawing = pygame.Surface((SIZE[0], SIZE[1] // nb_rows()))
+        drawing = pygame.Surface((self.size[0], self.size[1] // self.rows))
         drawing.fill(bg)
         rect = drawing.get_rect()
 
         # Time
         txt = sec2str(seconds)
-        surf = font.render(txt, True, fg, bg)
-        r = surf.get_rect(bottomright=rect.bottomright - V(5, 5))
+        surf = self.font.render(txt, True, fg, bg)
+        r = surf.get_rect(bottomright=rect.bottomright - Vec(5, 5))
         drawing.blit(surf, r)
 
         # Category
-        surf = font.render(str(cat), True, fg, bg)
+        surf = self.font.render(str(cat), True, fg, bg)
         drawing.blit(surf, (5, 5))
 
         return drawing
 
-    def draw_screen(log: LogEntry):
+    def draw(self, log: LogEntry):
+        """Render the whole screen."""
+
+        self.display.fill(0)
         # The screen is drawn every time there is a new log entry
         # since there is no point in painting it more
-        cat = ctx.get_cat(log)
+        cat = self.ctx.get_cat(log)
 
         if cat is UNCAT:
             print(log)
-        durs[cat] += log.duration
+        self.durs[cat] += log.duration
 
         # Send a notification every 15 minutes of an activity
-        if durs[cat] % (15 * 60) < 1:
-            notify(f"Déjà {durs[cat] // 60}min passées sur {cat}.")
+        if self.durs[cat] % (15 * 60) < 1:
+            notify(f"Déjà {self.durs[cat] // 60}min passées sur {cat}.")
 
-        surf = draw_cat(cat, durs[cat])
-        display.blit(surf, (0, 0))
+        # Draw the current actvity on top
+        surf = self.draw_cat(cat, self.durs[cat])
+        self.display.blit(surf, (0, 0))
 
-        bests = sorted(durs.items(), key=itemgetter(1), reverse=True)
+        # Then the rest, sorted
+        bests = sorted(self.durs.items(), key=itemgetter(1), reverse=True)
         bests = [x for x in bests if x[0] not in (cat, AFK)]
 
         for i, (c, dur) in enumerate(bests):
-            surf = draw_cat(c, dur)
-            display.blit(surf, (0, SIZE[1] // nb_rows() * (i + 1)))
+            surf = self.draw_cat(c, dur)
+            self.display.blit(surf, (0, self.size[1] // self.rows * (i + 1)))
 
-    durs = defaultdict(int)
-    next_day = start_of_day(datetime.now()) + DAY
-
-    def compute_durs():
-        cats = ctx.group_category(ctx.filter_today(logs))
-        durs.clear()
-        durs.update({c: ctx.tot_secs(ls) for c, ls in cats.items()})
-    compute_durs()
-
-    thread = Thread(target=logs.watch_apps, args=(1, draw_screen))
-    thread.start()
-
-    try:
-        while thread.is_alive():
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    logs.stop()
-                elif event.type == pygame.VIDEORESIZE:
-                    display = resize(event.size)
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_r:
-                        ctx.reload()
-                        compute_durs()
-                    elif event.unicode.isdigit():
-                        display = resize((SIZE[0], int(event.unicode) * ROW_IDEAL_SIZE))
-
-                ctx.shortcuts(event)
-
-            # If day changes, take the cats for the correct day
-            if datetime.now() >= next_day:
-                compute_durs()
-                next_day = start_of_day(datetime.now()) + DAY
-                display.fill(0)
-
-            pygame.display.update()
-            sleep(1/3)  # We don't need more than 3 FPS :P
-    finally:
-        logs.stop()
+    def compute_durs(self):
+        """Populate the duration dict"""
+        cats = self.ctx.group_category(self.ctx.filter_today(self.logs))
+        self.durs.clear()
+        self.durs.update({c: self.ctx.tot_secs(ls) for c, ls in cats.items()})
