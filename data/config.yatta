@@ -9,19 +9,35 @@
 # High priority
 CQFD:
     cqfd
-
 CHAT:
-    Telegram
-    Discord
-    WhatsApp
-    chat.lama-corp.space
+    diego.dorn@epfl.ch
     Courrier
-    aerc
-    zimbra
+
+FRACTALS:
+    mandelbrot
+    mandelbort
+    fractal
+    mconn.pdf
+    iterated function systems
+    L systems
+    IFS
+    Vol Libre, an amazing CG film
+    Beamer theme
+    dimension
+    hausdorffmeasure.pdf
+    brocoli
+    xaos
 
 ADMIN:
     logement
     FMEL
+    abs.ch
+    bas.ch
+    creditmutuel
+    My Paystubs
+    Compte ameli
+    sncf
+    blablacar
 
 MOOC:
     Mooc
@@ -42,6 +58,7 @@ CQFD:
     docs.google.com
     drive.google.com
     www.batelier.fr/
+    Tour Préliminaire - Online LaTeX Editor Overleaf
 
 TIMETRACK:
     app_watch.py
@@ -52,9 +69,11 @@ TIMETRACK:
 
 NIXOS:
     home-manager
+    rycee.gitlab.io
     nixos-conf
     Nixos
     configuration.nix
+    wpa_gui
 
 CODE:
     Stack Overflow
@@ -67,11 +86,20 @@ CODE:
     Dark Lama
     color.firefox
     TMUX
+    discord-bot
+    intra.lama-corp.space
 
 EPFL:
+    godel
+    manifold
+    detexify
+    exam
+    wolfram
+    math.stackexchange
     zoom
     moodle.epfl.ch
  r  Ex_GT_Ch\d\d.pdf
+    GT_
     Graph_Lec
     Course
     Moodle
@@ -83,12 +111,19 @@ EPFL:
     Epic Mountain
     piazza
     MATH-483
-    Sheet7
+ r  Sheet\d
     EPFL
+ r  week\d+.pdf
  r  chap\d.pdf
     Hildebrand-Intro
     Exercise sheet
-
+    Qu_GT_mock_exam.pdf
+ r  Lecture Notes Week \d+.pdf
+    Graph editor
+    total.pdf
+    Picture-in-picture
+    tube.switch.ch
+ r  upload \d+ GT
 
 ASSIST:
     dropbox
@@ -96,11 +131,23 @@ ASSIST:
     corrige_
     wacom
     kleki
+    analyse-iii
+    fspadaro
+    scratch - Online LaTeX Editor Overleaf
 
 WONTFIX:
     diego@maple:
 
 CHILL:
+    cracking-the-cryptic.web.app
+    webtoons
+    Dead Cells
+    fez
+    netflix
+    spendee
+    ddorn.gitlab.io
+    meet.google.com
+    twitter
     Reddit
     Youtube
     Google Photos
@@ -108,4 +155,25 @@ CHILL:
     conway.pdf
     angel-mathe
     remarkable
+    BigBlueButton
+    sex
+    steam
+    dominion
+    tap titan
+    instagram
+    chill
+    spotify
 
+CHAT:
+    Messenger
+    gmail
+    Telegram
+    Discord
+    WhatsApp
+    chat.lama-corp.space
+    aerc
+    zimbra
+    pulsesms
+
+AFK:
+    Site Blocked

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from time import time, sleep
 from typing import Optional, Callable, List, NoReturn
 
-from src.utils import sec2str, contrast, fmt
+from src.utils import sec2str, contrast, fmt, notify
 
 SEC = timedelta(seconds=1)
 MIN = timedelta(minutes=1)
@@ -113,7 +113,7 @@ class Logs(list):
         except BaseException:
             raise
         finally:
-            subprocess.call(["notify-send", 'Yatta stopped !', 'Active window monitoring has stopped.',"-a", "yatta.py"])
+            notify('Yatta stopped', 'Active window monitoring has stopped.')
 
     def _watch_apps(self, time_step, callback):
         last = time()
@@ -212,6 +212,9 @@ class Category:
     @property
     def fg(self):
         return contrast(self.color)
+
+    def colorize(self, text):
+        return fmt(text, self.fg, self.bg)
 
     def with_len(self, length, colorize=True):
         """Return a a string of given [length] with the category name that fits.

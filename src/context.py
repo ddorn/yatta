@@ -20,6 +20,7 @@ LogIterator = Iterator[LogEntry]
 @dataclass
 class Context:
     get_cat: Callable[[LogEntry], Category]
+    shortcuts: Callable
     path: str = ""
 
     @classmethod
@@ -38,13 +39,16 @@ class Context:
             print(globs)
             raise KeyError(f"No function [categorize] in {path}.")
 
-        return cls(categorize, path)
+        shortcuts = globs.get("shortcuts", lambda e: 0)
+
+        return cls(categorize, shortcuts, path)
 
     def reload(self):
         assert self.path, "Cannot reload context without path"
 
         new = self.load(self.path)
         self.get_cat = new.get_cat
+        self.shortcuts = new.shortcuts
 
     @staticmethod
     def tot_secs(logs: LogList) -> float:
@@ -89,7 +93,7 @@ class Context:
                     yield log
 
     @staticmethod
-    def filter_pattern(logs: LogList, name_pattern=None, class_pattern=None) -> LogIterator:
+    def filter_pattern(logs: LogIterator, name_pattern=None, class_pattern=None) -> LogIterator:
         """Yield all logs containing name_pattern or class_pattern in their name/class."""
 
         for log in logs:
@@ -97,7 +101,7 @@ class Context:
                     or class_pattern is not None and class_pattern in log.klass:
                 yield log
 
-    def filter_category(self, logs: LogList, *categories) -> LogIterator:
+    def filter_category(self, logs: LogIterator, *categories) -> LogIterator:
         """Yield logs that belong to any of the given categories."""
 
         for log in logs:
@@ -105,8 +109,16 @@ class Context:
             if cat in categories:
                 yield log
 
+    def exclude_categories(self, logs: LogIterator, *categories) -> LogIterator:
+        """Yield logs that belong to none of the given categories."""
+
+        for log in logs:
+            cat = self.get_cat(log)
+            if cat not in categories:
+                yield log
+
     @staticmethod
-    def filter_duration(logs: LogList, min_time: float) -> LogIterator:
+    def filter_duration(logs: LogIterator, min_time: float) -> LogIterator:
         """Yield logs lasting at least [min_time]."""
 
         for log in logs:
@@ -124,3 +136,31 @@ class Context:
         day = start_of_day(day)
 
         yield from Context.filter_time(logs, day, day + DAY)
+
+    def group_by(self, logs: LogIterator, classifications: str):
+        if not classifications:
+            return list(logs)
+
+        classification = classifications[0]
+        classifications = classifications[1:]
+
+        groups = defaultdict(list)
+        for log in logs:
+            if classification == "C":
+                c = self.get_cat(log)
+            elif classification == "D":
+                c = start_of_day(log.start).date()
+            else:
+                raise ValueError(f"'{classification}' is not a valid classification. "
+                                 f"Use:"
+                                 f"\n - C for categories"
+                                 f"\n - D for days"
+                                 # f"\n - M for months"
+                                 )
+
+            groups[c].append(log)
+
+        for cat, ls in groups.items():
+            groups[cat] = self.group_by(ls, classifications)
+
+        return groups

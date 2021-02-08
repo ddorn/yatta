@@ -1,6 +1,7 @@
 """
 General utility function not specific to any aspect of app tracking.
 """
+import subprocess
 from datetime import timedelta, datetime
 from typing import Tuple
 
@@ -82,3 +83,6 @@ def fmt(s, fg=None, bg=None, reset=True):
         reset = ""
 
     return "\033[" + flags + "m" + str(s) + reset
+
+def notify(title, msg=""):
+    subprocess.call(["notify-send", title, msg, "-a", "yatta.py"])

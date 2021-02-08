@@ -13,7 +13,11 @@ is the minimal function.
 
 import re
 from pathlib import Path
-from typing import List, Tuple
+from time import sleep
+from typing import List, Tuple, Union
+import subprocess
+
+import pygame
 
 from src.core import LogEntry, Category, AFK, UNCAT
 
@@ -29,12 +33,13 @@ TIMETRACK = Category("Time tracking", 0x0000ff)
 NIXOS = Category("NixOs", 0x555555)
 WONTFIX = Category("Wont fix", 0x000080)
 ADMIN = Category("Administratif", 0xaaaaaa)
+FRACTALS = Category("Fractals", 0xf62459)
 
+RULES_FILE = Path(__file__).with_suffix(".yatta")
 
-def load_rules() -> List[Tuple[Category, re.Pattern]]:
-    cats = {k: v for k, v in globals().items() if k.isupper()}
-
-    file = Path(__file__).with_suffix(".yatta").read_text().splitlines()
+def load_rules() -> List[Tuple[Category, Union[str, re.Pattern]]]:
+    cats = {k: v for k, v in globals().items() if k.isupper() and isinstance(v, Category)}
+    file = RULES_FILE.read_text().splitlines()
 
     rules = []
     last_cat = None
@@ -60,7 +65,8 @@ def load_rules() -> List[Tuple[Category, re.Pattern]]:
                 # elif t == "e":  # rule is a conjunction
                 #     rule = t.split("&")
             else:
-                rule = re.escape(stripped)
+                rules.append((last_cat, stripped.casefold()))
+                continue
 
             rules.append((last_cat, re.compile(rule, flags)))
         else:  # Category
@@ -71,8 +77,16 @@ def load_rules() -> List[Tuple[Category, re.Pattern]]:
 
 name_rules = load_rules()
 
+def categorize(log: LogEntry, __cache={}) -> Category:
+    as_tuple = (log.start, log.end, log.name, log.klass)
+    if as_tuple in __cache:
+        return __cache[as_tuple]
 
-def categorize(log: LogEntry) -> Category:
+    cat = _categorize(log)
+    __cache[as_tuple] = cat
+    return cat
+
+def _categorize(log: LogEntry) -> Category:
     # Categorizing vim uses
     if log.name == "nvim":
         return CODE
@@ -80,14 +94,21 @@ def categorize(log: LogEntry) -> Category:
     if log.klass == '"zoom", "zoom"':
         return categorize_zoom(log)
 
+    name = log.name.casefold()
     for cat, pattern in name_rules:
-        if re.search(pattern, log.name):
+        if isinstance(pattern, str):
+            if pattern in name:
+                return cat
+        elif re.search(pattern, log.name):
             return cat
 
     class_contains_map = {
         "telegram": CHAT,
         "Spotify": CHILL,
         "krita": CHILL,
+        "mandelbort": FRACTALS,
+        "Steam": CHILL,
+        "wpa_gui": NIXOS,
         # "terminator": CODE,
     }
 
@@ -118,22 +139,32 @@ def categorize_zoom(log: LogEntry):
     weekday = log.start.weekday()
     hour = log.start.hour
 
-    if weekday == 0:  # Monday
-        if hour == 10:
-            return ASSIST
-        elif hour == 12:
-            return CHILL  # Séminaire Bachelor
-    elif weekday == 1:  # Tuesday
-        if 14 <= hour < 16:
-            return ASSIST
-    elif weekday == 2:  # Wednesday
-        if hour == 16:
-            return CQFD
-    elif weekday == 3:  # Thursday
-        if 10 <= hour < 12 or 13 <= hour < 15:
-            return ASSIST
-    elif weekday == 4:  # Friday
-        if hour == 18:
-            return CHILL  # Trivials notions
+    if log.start.year == 2020:
+        if weekday == 0:  # Monday
+            if hour == 10:
+                return ASSIST
+            elif hour == 12:
+                return CHILL  # Séminaire Bachelor
+        elif weekday == 1:  # Tuesday
+            if 14 <= hour < 16:
+                return ASSIST
+        elif weekday == 2:  # Wednesday
+            if hour == 16:
+                return CQFD
+        elif weekday == 3:  # Thursday
+            if 10 <= hour < 12 or 13 <= hour < 15:
+                return ASSIST
+        elif weekday == 4:  # Friday
+            if hour == 18:
+                return CHILL  # Trivials notions
 
     return EPFL
+
+
+def shortcuts(event):
+    if event.type == pygame.KEYDOWN:
+        if event.key == pygame.K_e:
+            subprocess.call(["terminator", "-fx", f"nvim -O {RULES_FILE} {__file__}"])
+
+        if event.key == pygame.K_s:
+            sleep(5 * 60)

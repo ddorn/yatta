@@ -7,6 +7,7 @@ let
       pygame
       click
       ptpython
+      dateutil
     ];
   };
 in
