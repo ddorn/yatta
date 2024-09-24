@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "yatta"
+version = "0.1.0"
+description = ""
+authors = ["ddorn <diego.dorn@free.fr>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pygame-ce = "^2.5.1"
+click = "^8.1.7"
+python-dateutil = "^2.9.0.post0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
