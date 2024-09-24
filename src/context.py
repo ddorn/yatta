@@ -22,6 +22,7 @@ class Context:
     get_cat: Callable[[LogEntry], Category]
     shortcuts: Callable
     path: str = ""
+    lock15: tuple = ()
 
     @classmethod
     def load(cls, path):
@@ -40,8 +41,9 @@ class Context:
             raise KeyError(f"No function [categorize] in {path}.")
 
         shortcuts = globs.get("shortcuts", lambda e: 0)
+        lock15 = globs.get("LOCK_EVERY_15", ())
 
-        return cls(categorize, shortcuts, path)
+        return cls(categorize, shortcuts, path, lock15)
 
     def reload(self):
         assert self.path, "Cannot reload context without path"
@@ -49,6 +51,7 @@ class Context:
         new = self.load(self.path)
         self.get_cat = new.get_cat
         self.shortcuts = new.shortcuts
+        self.lock15 = new.lock15
 
     @staticmethod
     def tot_secs(logs: LogList) -> float:

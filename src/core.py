@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from time import time, sleep
 from typing import Optional, Callable, List, NoReturn
+import warnings
 
 from src.utils import sec2str, contrast, fmt, notify
 
@@ -11,6 +12,12 @@ MIN = timedelta(minutes=1)
 HOUR = timedelta(hours=1)
 DAY = timedelta(days=1)
 
+
+ON_SWAY = subprocess.run("swaymsg -t get_tree", shell=True, text=True).returncode == 0
+ON_XORG = subprocess.run("xprop -root", shell=True, text=True).returncode == 0
+
+if not ON_SWAY and not ON_XORG:
+    warnings.warn("Neither sway nor xorg is detected, other window managers are not yet supported to get the active window. The gui will not show anything.")
 
 
 @dataclass
@@ -71,10 +78,19 @@ class LogEntry:
 
     @classmethod
     def get_log(cls, time_step=1) -> "LogEntry":
-        a = subprocess.check_output("xprop -id $(xdotool getwindowfocus) -notype WM_NAME WM_CLASS", shell=True, text=True).splitlines()
+        if ON_SWAY:
+            a = subprocess.check_output("swaymsg -t get_tree | jq -r '.. | select(.type?) | select(.focused) | .name, .app_id'", shell=True, text=True).splitlines()
+            
+            wm_name = a[0]
+            wm_class = a[1]
 
-        wm_name = a[0].partition(" = ")[2][1:-1]
-        wm_class = a[1].partition(" = ")[2]
+        elif ON_XORG:
+            a = subprocess.check_output("xprop -id $(xdotool getwindowfocus) -notype WM_NAME WM_CLASS", shell=True, text=True).splitlines()
+
+            wm_name = a[0].partition(" = ")[2][1:-1]
+            wm_class = a[1].partition(" = ")[2]
+        else:
+            raise NotImplementedError("This window manager is not supported.")
 
         start = datetime.now()
         return cls(

@@ -40,10 +40,21 @@ ADMIN:
     blablacar
 
 MOOC:
+    CS-112
+    Réponses
+    progmaph
+ r  \d{8}_.*.cc
     Mooc
     Coursera
     predproie.cc
     biblio.cc
+    ass-poo
+ r  \d{4}-q3.yaml
+
+SPRIG:
+    sprig
+    blockchain
+    algorand
 
 CQFD:
     Google Drive
@@ -61,6 +72,7 @@ CQFD:
     Tour Préliminaire - Online LaTeX Editor Overleaf
 
 TIMETRACK:
+    habitica
     app_watch.py
     ActivityWatch
     ARBTT
@@ -76,6 +88,13 @@ NIXOS:
     wpa_gui
 
 CODE:
+    pygame
+    Vue
+    PyCharm
+    SQL
+    HTML
+    MDN
+    unity
     Stack Overflow
     Python
     prog/vrac
@@ -85,11 +104,14 @@ CODE:
     zsh
     Dark Lama
     color.firefox
+    JavaScript
     TMUX
     discord-bot
     intra.lama-corp.space
+    127.0.0.1
 
 EPFL:
+    algebraic
     godel
     manifold
     detexify
@@ -101,7 +123,7 @@ EPFL:
  r  Ex_GT_Ch\d\d.pdf
     GT_
     Graph_Lec
-    Course
+    Cours
     Moodle
     Kuratowski.pdf
     VSCodium
@@ -124,6 +146,7 @@ EPFL:
     Picture-in-picture
     tube.switch.ch
  r  upload \d+ GT
+ r  exercise\d+.pdf
 
 ASSIST:
     dropbox
@@ -163,8 +186,11 @@ CHILL:
     instagram
     chill
     spotify
+    radiooooo
+    lichess
 
 CHAT:
+    mail
     Messenger
     gmail
     Telegram

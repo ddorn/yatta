@@ -6,9 +6,18 @@ Two categories are always defined, AFK and UNCAT,they can be found with
 >>> from src.core import LogEntry, Category, AFK, UNCAT
 
 The categorize function should always return a category, so
+the minimal function is:
 >>> def categorize(log):
 >>>     return UNCAT
-is the minimal function.
+
+
+Optionnaly one can define a [shortcuts] function
+that takes a pygame.Event as an input and does whatever
+they want.
+
+A LOCK_EVERY_15 list of categories can be defined
+and the GUI will lock the computer every 15 minutes
+of use of those categories.
 """
 
 import re
@@ -34,6 +43,7 @@ NIXOS = Category("NixOs", 0x555555)
 WONTFIX = Category("Wont fix", 0x000080)
 ADMIN = Category("Administratif", 0xaaaaaa)
 FRACTALS = Category("Fractals", 0xf62459)
+SPRIG = Category("SPRIG", 0x62388b)
 
 RULES_FILE = Path(__file__).with_suffix(".yatta")
 
@@ -109,6 +119,7 @@ def _categorize(log: LogEntry) -> Category:
         "mandelbort": FRACTALS,
         "Steam": CHILL,
         "wpa_gui": NIXOS,
+        "jetbrains-pycharm": CODE,
         # "terminator": CODE,
     }
 
@@ -168,3 +179,5 @@ def shortcuts(event):
 
         if event.key == pygame.K_s:
             sleep(5 * 60)
+
+LOCK_EVERY_15 = [CHAT]

@@ -1,3 +1,4 @@
+import os
 from collections import defaultdict
 from datetime import datetime
 from operator import itemgetter
@@ -65,7 +66,7 @@ class Gui:
     def process_event(self, event):
         if event.type == pygame.QUIT:
             self.logs.stop()
-        elif event.type == pygame.VIDEOREself.size:
+        elif event.type == pygame.VIDEORESIZE:
             self.display = self.get_display(event.size)
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_r:
@@ -113,6 +114,8 @@ class Gui:
         # Send a notification every 15 minutes of an activity
         if self.durs[cat] % (15 * 60) < 1:
             notify(f"Déjà {self.durs[cat] // 60}min passées sur {cat}.")
+            if cat in self.ctx.lock15:
+                os.system("i3lock")
 
         # Draw the current actvity on top
         surf = self.draw_cat(cat, self.durs[cat])

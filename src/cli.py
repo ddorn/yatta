@@ -168,9 +168,9 @@ def start(ctx: Context, logfile, time_step):
 def gui(ctx, logfile):
     logs = Logs.load(logfile)
 
-    from src.gui import gui
+    from src.gui import Gui
 
-    gui(ctx, logs)
+    Gui(ctx, logs).run()
 
 
 @yatta.command()
@@ -194,6 +194,7 @@ def query(graph_kind, ctx: Context, logfile, pattern, range, category, time_line
     graph-kind is the visualisation method and can be one of:
      - list: print logs
      - total: print total duration for each group
+     - timeline: print logs in a timeline (you probably want to use --by D)
 
     Lowercase options are for filterning, and uppercase are to control the display format."""
     logs = Logs.load(logfile)
